@@ -1,0 +1,46 @@
+{
+  "name": "sillage",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "npm run build:packages && concurrently -k -n api,web \"npm run dev -w @sillage/api\" \"npm run dev -w @sillage/web\"",
+    "build:packages": "tsc -b packages/shared packages/quiz-parser",
+    "build": "npm run build:packages && npm run build -w @sillage/api && npm run build -w @sillage/web",
+    "typecheck": "npm run build:packages && npm run typecheck --workspaces --if-present",
+    "test": "npm run build:packages && vitest run",
+    "test:integration": "npm run build && vitest run --config vitest.integration.config.ts",
+    "test:e2e": "playwright test",
+    "db:generate": "npm run db:generate -w @sillage/api",
+    "db:migrate": "npm run db:migrate -w @sillage/api",
+    "account": "npm run account -w @sillage/api --",
+    "start": "npm run start -w @sillage/api",
+    "local": "node scripts/local.mjs",
+    "format": "prettier --write apps/*/src packages/*/src tests scripts *.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "*",
+    "@testing-library/jest-dom": "*",
+    "@testing-library/react": "*",
+    "@testing-library/user-event": "*",
+    "@types/node": "^24.0.0",
+    "concurrently": "*",
+    "dotenv": "*",
+    "jsdom": "*",
+    "prettier": "^3.10.1",
+    "tsx": "*",
+    "typescript": "^6.0.0",
+    "vitest": "*"
+  },
+  "overrides": {
+    "effect": "3.22.5",
+    "katex": "0.19.1"
+  }
+}

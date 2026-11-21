@@ -1,0 +1,39 @@
+{
+  "name": "@sillage/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --tsconfig tsconfig.json src/main.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "start": "node dist/main.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "account": "tsx --tsconfig tsconfig.json src/account.ts"
+  },
+  "dependencies": {
+    "@sillage/shared": "1.0.0",
+    "@sillage/quiz-parser": "1.0.0",
+    "@nestjs/common": "^12.6.0",
+    "@nestjs/core": "^12.6.0",
+    "@nestjs/platform-express": "^12.6.0",
+    "@nestjs/swagger": "*",
+    "@prisma/client": "^7.0.0",
+    "@prisma/adapter-pg": "^7.0.0",
+    "argon2": "*",
+    "cookie-parser": "*",
+    "dotenv": "*",
+    "helmet": "*",
+    "pg": "^8.0.0",
+    "reflect-metadata": "*",
+    "rxjs": "^7.0.0",
+    "zod": "^4.0.0",
+    "prisma": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "*",
+    "@types/express": "^5.0.0",
+    "@types/pg": "^8.0.0"
+  }
+}

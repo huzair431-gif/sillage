@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum QuestionType { 
+  SINGLE
+  MULTIPLE
+  TRUE_FALSE
+}
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+enum MemoryStatus {
+  NEW
+  FRAGILE
+  CONSOLIDATING
+  MASTERED
+}
+enum QuizMode {
+  DISCOVERY
+  REVISION
+  EXAM
+}
+enum QuizStatus {
+  ACTIVE
+  COMPLETED
+}
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique
+  name String
+  passwordHash String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  preferences UserPreferences?
+  authSessions AuthSession[]
+  subjects Subject[]
+  quizSessions QuizSession[]
+  memories MemoryState[]
+  imports ImportBatch[]
+  restoreTokens RestoreToken[]
+}
+model UserPreferences {
+  userId String @id @db.Uuid
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  theme String @default("system")
+  activeRecallEnabled Boolean @default(false)
+  autoAdvanceEnabled Boolean @default(true)
+  reducedMotion Boolean @default(false)
+  timezone String @default("Europe/Paris")
+}
+model AuthSession {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  tokenHash String @unique
+  csrfHash String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([expiresAt])
+}
+model Subject {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  name String
+  description String @default("")
+  color String @default("indigo")
+  examDate DateTime? @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  chapters Chapter[]
+  sessions QuizSession[]
+  @@index([userId, deletedAt])
+}
+model Chapter {
+  id String @id @default(uuid()) @db.Uuid
+  subjectId String @db.Uuid
+  subject Subject @relation(fields:[subjectId], references:[id], onDelete:Cascade)
+  title String
+  position Int @default(0)
+  revision Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  questions Question[]
+  sessions QuizSession[]
+  imports ImportBatch[]
+  @@index([subjectId, deletedAt, position])
+}
+model Question {
+  id String @id @default(uuid()) @db.Uuid
+  chapterId String @db.Uuid
+  chapter Chapter @relation(fields:[chapterId], references:[id], onDelete:Cascade)
+  externalId String?
+  type QuestionType
+  notion String @default("")
+  difficulty Difficulty @default(MEDIUM)
+  statement String
+  image Json?
+  explanation String
+  contentHash String
+  currentVersion Int @default(1)
+  position Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  options QuestionOption[]
+  versions QuestionVersion[]
+  memories MemoryState[]
+  sessionQuestions SessionQuestion[]
+  attempts AnswerAttempt[]
+  @@unique([chapterId, externalId])
+  @@index([chapterId, deletedAt, position])
+  @@index([contentHash])
+}
+model QuestionOption {
+  id String @id @default(uuid()) @db.Uuid
+  questionId String @db.Uuid
+  question Question @relation(fields:[questionId], references:[id], onDelete:Cascade)
+  text String
+  position Int
+  isCorrect Boolean
+  @@unique([questionId, position])
+}
+model QuestionVersion {
+  id String @id @default(uuid()) @db.Uuid
+  questionId String @db.Uuid
+  question Question @relation(fields:[questionId], references:[id], onDelete:Cascade)
+  version Int
+  contentHash String
+  snapshot Json
+  createdAt DateTime @default(now())
+  sessionQuestions SessionQuestion[]
+  @@unique([questionId, version])
+}
+model QuizSession {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  subjectId String @db.Uuid
+  subject Subject @relation(fields:[subjectId], references:[id], onDelete:Cascade)
+  chapterId String? @db.Uuid
+  chapter Chapter? @relation(fields:[chapterId], references:[id], onDelete:SetNull)
+  mode QuizMode
+  status QuizStatus @default(ACTIVE)
+  seed Int
+  initialCount Int
+  startedAt DateTime @default(now())
+  deadlineAt DateTime?
+  completedAt DateTime?
+  durationSeconds Int?
+  score Float?
+  questions SessionQuestion[]
+  attempts AnswerAttempt[]
+  @@index([userId, startedAt(sort:Desc)])
+  @@index([chapterId])
+  @@index([subjectId])
+}
+model SessionQuestion {
+  id String @id @default(uuid()) @db.Uuid
+  sessionId String @db.Uuid
+  session QuizSession @relation(fields:[sessionId], references:[id], onDelete:Cascade)
+  questionId String @db.Uuid
+  question Question @relation(fields:[questionId], references:[id], onDelete:Cascade)
+  questionVersionId String @db.Uuid
+  questionVersion QuestionVersion @relation(fields:[questionVersionId], references:[id], onDelete:Cascade)
+  position Int
+  shuffledOptionIds String[] @db.Uuid
+  isReinforcement Boolean @default(false)
+  attempt AnswerAttempt?
+  @@unique([sessionId, position])
+  @@unique([sessionId, questionId, isReinforcement])
+  @@index([questionVersionId])
+  @@index([questionId])
+}
+model AnswerAttempt {
+  id String @id @default(uuid()) @db.Uuid
+  sessionId String @db.Uuid
+  session QuizSession @relation(fields:[sessionId], references:[id], onDelete:Cascade)
+  sessionQuestionId String @unique @db.Uuid
+  sessionQuestion SessionQuestion @relation(fields:[sessionQuestionId], references:[id], onDelete:Cascade)
+  questionId String @db.Uuid
+  question Question @relation(fields:[questionId], references:[id], onDelete:Cascade)
+  selectedOptionIds String[] @db.Uuid
+  isCorrect Boolean
+  isGuessed Boolean @default(false)
+  isReinforcement Boolean @default(false)
+  idempotencyKey String @db.Uuid
+  answeredAt DateTime @default(now())
+  correctionAcknowledgedAt DateTime?
+  responseTimeSeconds Int
+  @@unique([sessionId, idempotencyKey])
+  @@index([questionId, answeredAt(sort:Desc)])
+}
+model MemoryState {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  questionId String @db.Uuid
+  question Question @relation(fields:[questionId], references:[id], onDelete:Cascade)
+  version Int
+  status MemoryStatus @default(NEW)
+  successCount Int @default(0)
+  failureCount Int @default(0)
+  reliableStreak Int @default(0)
+  lastReviewedAt DateTime?
+  lastReliableSuccessDate DateTime? @db.Date
+  nextReviewAt DateTime? @db.Date
+  lastFailureAt DateTime?
+  @@unique([userId, questionId])
+  @@index([userId, nextReviewAt])
+  @@index([questionId])
+}
+model ImportBatch {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  chapterId String @db.Uuid
+  chapter Chapter @relation(fields:[chapterId], references:[id], onDelete:Cascade)
+  mode String
+  questionCount Int
+  summary Json
+  createdAt DateTime @default(now())
+  @@index([userId, chapterId])
+  @@index([chapterId])
+}
+model RestoreToken {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  tokenHash String @unique
+  dataHash String
+  expiresAt DateTime
+  @@index([userId])
+}
