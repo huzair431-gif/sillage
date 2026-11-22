@@ -18,8 +18,10 @@ import { AppModule } from './app.js';
 import { Errors } from './common.js';
 config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '../../../.env'), quiet: true });
 export async function bootstrap() {
-  if (!process.env.DATABASE_URL || !process.env.WEB_ORIGIN)
-    throw new Error('DATABASE_URL et WEB_ORIGIN sont obligatoires.');
+  if (!process.env.DATABASE_URL || !process.env.WEB_ORIGIN) {
+    const missing = ['DATABASE_URL', 'WEB_ORIGIN'].filter((name) => !process.env[name]);
+    throw new Error(`Variables d’environnement obligatoires absentes ou vides : ${missing.join(', ')}.`);
+  }
   if (process.env.NODE_ENV === 'production' && !process.env.WEB_ORIGIN.startsWith('https://'))
     throw new Error('WEB_ORIGIN doit utiliser HTTPS en production.');
   const app = await NestFactory.create(AppModule, {

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import type { QuizSession } from '@sillage/shared';
+import { QUESTION_TIME_LIMIT_SECONDS, type QuizSession } from '@sillage/shared';
 
 test('importe une image, la retrouve après rechargement et la consulte pendant le quiz', async ({
   page,
@@ -118,7 +118,7 @@ test('importe une image, la retrouve après rechargement et la consulte pendant 
   page.on('request', (request) => {
     if (request.url().endsWith('/answers')) answers++;
   });
-  await page.waitForTimeout(11000);
+  await page.waitForTimeout((QUESTION_TIME_LIMIT_SECONDS + 1) * 1000);
   expect(await page.locator('.question-timer strong').textContent()).toBe(remaining);
   expect(answers).toBe(0);
   await page.getByRole('button', { name: 'Fermer', exact: true }).click();

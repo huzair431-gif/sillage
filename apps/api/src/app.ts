@@ -30,7 +30,12 @@ class BackupsModule {}
 class HealthController {
   constructor(@Inject(Db) private db: Db) {}
   @Public() @Get('health') async health() {
-    await this.db.$queryRaw`SELECT 1`;
+    // Validate the authentication schema without reading any account or session data.
+    await this.db.$queryRaw`
+      SELECT u."id", p."userId", s."id"
+      FROM "User" AS u, "UserPreferences" AS p, "AuthSession" AS s
+      LIMIT 0
+    `;
     return { status: 'ok' };
   }
 }

@@ -56,7 +56,7 @@ Dans l’éditeur d’une question, **Ajouter une image** permet de joindre une 
 
 Les raccourcis 1–9 sélectionnent les propositions ; Entrée valide hors champs de saisie et dialogues. Les réponses multiples exigent une correspondance exacte. Une erreur impose la lecture et la confirmation de sa correction hors examen. Une réponse devinée conserve le point du score brut mais redevient fragile.
 
-Chaque question dispose de **10 secondes**, dans les trois modes et pour les renforcements. À zéro, la sélection est validée automatiquement ; sans sélection, la réponse est enregistrée comme incorrecte. Le compteur se suspend pendant une correction, un enregistrement ou une pause, puis repart à 10 secondes à la question suivante. L’examen peut aussi avoir une durée totale.
+Chaque question dispose de **20 secondes**, dans les trois modes et pour les renforcements. À zéro, la sélection est validée automatiquement ; sans sélection, la réponse est enregistrée comme incorrecte. Le compteur se suspend pendant une correction, un enregistrement ou une pause, puis repart à 20 secondes à la question suivante. L’examen peut aussi avoir une durée totale.
 
 Le bouton **Mettre en pause** conserve la session côté serveur. Après une coupure réseau, la réponse reste en attente dans l’onglet et peut être renvoyée avec la même clé d’idempotence. Les bonnes réponses d’un examen ne sont pas envoyées par les endpoints de session avant sa clôture. Le gestionnaire de questions reste un espace d’auteur qui affiche naturellement ses corrections.
 

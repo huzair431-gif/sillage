@@ -85,6 +85,27 @@ describe('configuration de production', () => {
     expect((await fetch(`${base}/api/docs`)).status).toBe(404);
   });
 
+  it.each(['User', 'UserPreferences', 'AuthSession'])(
+    'refuse la disponibilité quand la table %s manque, sans exposer les détails SQL',
+    async (table) => {
+      const hidden = `_readiness_${table}`;
+      await db.$executeRawUnsafe(`ALTER TABLE "${table}" RENAME TO "${hidden}"`);
+      try {
+        const response = await fetch(`${base}/api/health`);
+        expect(response.status).toBe(500);
+        const body = await response.json();
+        expect(body.error.code).toBe('INTERNAL');
+        expect(body.error.requestId).toEqual(expect.any(String));
+        expect(JSON.stringify(body)).not.toContain(hidden);
+        expect(JSON.stringify(body)).not.toContain('SELECT');
+        expect(JSON.stringify(body)).not.toContain(password);
+      } finally {
+        await db.$executeRawUnsafe(`ALTER TABLE "${hidden}" RENAME TO "${table}"`);
+      }
+      expect((await fetch(`${base}/api/health`)).status).toBe(200);
+    },
+  );
+
   it('authentifie sur l’origine HTTPS exacte avec des cookies sécurisés', async () => {
     const response = await fetch(`${base}/api/auth/login`, {
       method: 'POST',

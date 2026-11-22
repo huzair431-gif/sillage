@@ -128,15 +128,17 @@ afterEach(() => {
 });
 
 describe('chronomètre par question', () => {
-  it('expire exactement après dix secondes et appelle la dernière action une seule fois', async () => {
+  it('expire exactement après vingt secondes et appelle la dernière action une seule fois', async () => {
     const initial = vi.fn();
     const latest = vi.fn();
     const props = { storageKey: 'clock', running: true, answered: false };
     const view = render(<QuestionTimer {...props} onExpire={initial} />);
+    expect(screen.getByRole('timer')).toHaveTextContent('0:20');
+    await advance(10000);
+    expect(initial).not.toHaveBeenCalled();
     expect(screen.getByRole('timer')).toHaveTextContent('0:10');
-    await advance(5000);
     view.rerender(<QuestionTimer {...props} onExpire={latest} />);
-    await advance(4900);
+    await advance(9900);
     expect(latest).not.toHaveBeenCalled();
     expect(screen.getByRole('timer')).toHaveTextContent('0:01');
     await advance(100);
@@ -156,8 +158,8 @@ describe('chronomètre par question', () => {
     view.unmount();
     await advance(30000);
     render(<QuestionTimer storageKey="clock" running answered={false} onExpire={expired} />);
-    expect(screen.getByRole('timer')).toHaveTextContent('0:07');
-    await advance(6900);
+    expect(screen.getByRole('timer')).toHaveTextContent('0:17');
+    await advance(16900);
     expect(expired).not.toHaveBeenCalled();
     await advance(100);
     expect(expired).toHaveBeenCalledTimes(1);
@@ -166,7 +168,7 @@ describe('chronomètre par question', () => {
   it('retrouve l’échéance sauvegardée après un rechargement', async () => {
     sessionStorage.setItem(
       'clock',
-      JSON.stringify({ remainingMs: 10000, deadlineAt: Date.now() + 4000 }),
+      JSON.stringify({ remainingMs: 20000, deadlineAt: Date.now() + 4000 }),
     );
     const expired = vi.fn();
     render(<QuestionTimer storageKey="clock" running answered={false} onExpire={expired} />);
@@ -187,8 +189,8 @@ describe('validation chronométrée du quiz', () => {
     await advance(20000);
     expect(api).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Fermer' }));
-    expect(screen.getByRole('timer')).toHaveTextContent('0:07');
-    await advance(7001);
+    expect(screen.getByRole('timer')).toHaveTextContent('0:17');
+    await advance(17001);
     expect(api).toHaveBeenCalledTimes(1);
   });
   it.each(['DISCOVERY', 'REVISION', 'EXAM'] as const)(
@@ -200,7 +202,7 @@ describe('validation chronométrée du quiz', () => {
       fireEvent.click(screen.getByRole('button', { name: /Proposition A/ }));
       await advance(5000);
       fireEvent.click(screen.getByRole('button', { name: /Proposition B/ }));
-      await advance(4900);
+      await advance(14900);
       expect(api).not.toHaveBeenCalled();
       await advance(100);
       expect(api).toHaveBeenCalledWith('/quiz/sessions/timer-session/answers', {
@@ -219,7 +221,7 @@ describe('validation chronométrée du quiz', () => {
     const data = session();
     vi.mocked(api).mockResolvedValue(answeredSession(data, []));
     renderQuiz(data);
-    await advance(10001);
+    await advance(20001);
     expect(api).toHaveBeenCalledWith('/quiz/sessions/timer-session/answers', {
       method: 'POST',
       body: expect.objectContaining({ selectedOptionIds: [], timedOut: true }),
@@ -229,7 +231,7 @@ describe('validation chronométrée du quiz', () => {
     expect(api).toHaveBeenCalledTimes(1);
   });
 
-  it('ne renvoie pas une réponse validée manuellement et redémarre à dix secondes', async () => {
+  it('ne renvoie pas une réponse validée manuellement et redémarre à vingt secondes', async () => {
     const data = session();
     vi.mocked(api).mockResolvedValue(answeredSession(data, [optionB]));
     renderQuiz(data);
@@ -240,8 +242,8 @@ describe('validation chronométrée du quiz', () => {
     expect(api).toHaveBeenCalledTimes(1);
     expect(vi.mocked(api).mock.calls[0]?.[1]?.body).toMatchObject({ timedOut: false });
     fireEvent.click(screen.getByRole('button', { name: 'Continuer' }));
-    expect(screen.getByRole('timer')).toHaveTextContent('0:10');
-    await advance(9000);
+    expect(screen.getByRole('timer')).toHaveTextContent('0:20');
+    await advance(19000);
     expect(api).toHaveBeenCalledTimes(1);
   });
 
@@ -252,8 +254,8 @@ describe('validation chronométrée du quiz', () => {
     await advance(30000);
     expect(api).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
-    expect(screen.getByRole('timer')).toHaveTextContent('0:07');
-    await advance(6900);
+    expect(screen.getByRole('timer')).toHaveTextContent('0:17');
+    await advance(16900);
     expect(api).not.toHaveBeenCalled();
   });
 
@@ -263,7 +265,7 @@ describe('validation chronométrée du quiz', () => {
       .mockRejectedValueOnce(new ApiError('Connexion interrompue.', 0, 'NETWORK'))
       .mockResolvedValue(answeredSession(data, []));
     const view = renderQuiz(data);
-    await advance(10001);
+    await advance(20001);
     const firstPayload = vi.mocked(api).mock.calls[0]?.[1]?.body;
     expect(screen.getByRole('button', { name: 'Réessayer l’enregistrement' })).toBeEnabled();
     view.unmount();

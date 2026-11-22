@@ -9,7 +9,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { z } from 'zod';
 import type { Request, Response } from 'express';
@@ -89,6 +89,9 @@ export class Errors implements ExceptionFilter {
         method: req.method,
         path: req.path,
         error: error instanceof Error ? error.name : 'Unknown',
+        ...(error instanceof Prisma.PrismaClientKnownRequestError
+          ? { databaseCode: error.code }
+          : {}),
       });
     res
       .status(status)

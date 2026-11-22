@@ -160,7 +160,7 @@ export const preferencesSchema = z
   .strict();
 export type Preferences = z.infer<typeof preferencesSchema>;
 export type Mode = z.infer<typeof quizSchema>['mode'];
-export const QUESTION_TIME_LIMIT_SECONDS = 10;
+export const QUESTION_TIME_LIMIT_SECONDS = 20;
 export type MemoryStatus = 'NEW' | 'FRAGILE' | 'CONSOLIDATING' | 'MASTERED';
 export interface Stats {
   total: number;
