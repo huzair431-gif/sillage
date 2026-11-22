@@ -43,7 +43,7 @@ Une question d’entrée contient `externalId?`, `statement`, `type` (`SINGLE`, 
 
 `GET /quiz/sessions/:id` retourne le même état persisté, pour la reprise. En examen actif, aucun `feedback`, champ `isCorrect`, score intermédiaire ou explication n’est exposé.
 
-`POST /quiz/sessions/:id/answers` reçoit `{sessionQuestionId,selectedOptionIds,isGuessed,timedOut?,idempotencyKey}`. Le compte à rebours de chaque question dure 20 secondes dans l’interface. À expiration, `timedOut: true` permet une sélection vide, évaluée comme incorrecte ; une sélection vide sans ce drapeau reste refusée. Il n’accepte aucun score, indicateur de justesse ou de renforcement venant du client. La justesse est calculée par égalité des ensembles de bonnes réponses. La clé d’idempotence est un UUID ; un même corps peut être rejoué, un corps différent avec la même clé est refusé. Les réponses doivent suivre l’ordre de la session.
+`POST /quiz/sessions/:id/answers` reçoit `{sessionQuestionId,selectedOptionIds,isGuessed,timedOut?,idempotencyKey}`. Le compte à rebours de chaque question dure 45 secondes dans l’interface. À expiration, `timedOut: true` permet une sélection vide, évaluée comme incorrecte ; une sélection vide sans ce drapeau reste refusée. Il n’accepte aucun score, indicateur de justesse ou de renforcement venant du client. La justesse est calculée par égalité des ensembles de bonnes réponses. La clé d’idempotence est un UUID ; un même corps peut être rejoué, un corps différent avec la même clé est refusé. Les réponses doivent suivre l’ordre de la session.
 
 `POST /quiz/sessions/:id/corrections/:itemId/ack` confirme explicitement une correction obligatoire en entraînement. L’API refuse une nouvelle réponse tant qu’une correction erronée attend cette confirmation.
 
